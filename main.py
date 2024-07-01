@@ -21,8 +21,9 @@ def download_video(yt):
             video_steam = yt.streams.first()
             video_steam.download(st.session_state.save_path)
             st.success('Download Complete', icon="✅")
-        except:
+        except Exception as e:
             st.error('An error occurred', icon="🚨")
+            st.write(e)
 
 def download_transcript(video):
     try:
