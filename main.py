@@ -3,41 +3,28 @@ from youtubesearchpython import VideosSearch, Transcript
 from pytube import YouTube, Playlist
 import os
 
+
 st.set_page_config(page_title="YTD ", page_icon="🚀", layout="wide", )
 
 
 def download_audio(yt):
-    try:
-        audio_stream = yt.streams.filter(only_audio=True).first()
-        audio_stream.download(st.session_state.save_path)
-        file_path = st.session_state.save_path + audio_stream.default_filename
-        with open(file_path, "rb") as f:
-            buffer = f.read()
-        if st.download_button(
-            label="Download Audio",
-            data=buffer,
-            file_name=audio_stream.default_filename,
-            mime="audio/mpeg"):
+    with st.spinner('Downloading...'):
+        try:
+            audio_stream = yt.streams.filter(only_audio=True).first()
+            audio_stream.download(st.session_state.save_path)
             st.success('Download Complete', icon="✅")
-    except:
-        st.error('An error occurred', icon="🚨")
+        except:
+            st.error('An error occurred', icon="🚨")
 
 
 def download_video(yt):
-    try:
-        video_steam = yt.streams.first()
-        video_steam.download(st.session_state.save_path)
-        file_path = st.session_state.save_path + video_steam.default_filename
-        with open(file_path, "rb") as f:
-            buffer = f.read()
-        if st.download_button(
-                label="Download Video",
-                data=buffer,
-                file_name=video_steam.default_filename,
-                mime="audio/mpeg"):
+    with st.spinner('Downloading...'):
+        try:
+            video_steam = yt.streams.first()
+            video_steam.download(st.session_state.save_path)
             st.success('Download Complete', icon="✅")
-    except:
-        st.error('An error occurred', icon="🚨")
+        except:
+            st.error('An error occurred', icon="🚨")
 
 
 def download_transcript(video):
@@ -75,10 +62,12 @@ def fill_table(video):
 
 def buttons_in_table(video):
     yt = YouTube(video['link'])
-    #if st.button('Create Audio Download Link', key=f"audio_{video['id']}"):
-    download_audio(yt)
-    #if st.button('Create Video Download Link', key=f"video_{video['id']}"):
-    download_video(yt)
+    if st.button('Download Audio', key=f"audio_{video['id']}"):
+        download_audio(yt)
+    if st.button('Download Video', key=f"video_{video['id']}"):
+        download_video(yt)
+    if st.button('Transcript', key=f"transcript_{video['id']}"):
+        download_transcript(video)
 
 
 st.title('Youtube Downloader')
@@ -130,11 +119,37 @@ with tab1:
 with tab2:
 
     video_url = st.text_input('Enter the video url')
-    if video_url:
-        yt = YouTube(video_url)
-        st.video(yt.streams.first().url)
-        st.write(f"Title: {yt.title}")
-        st.write(f"Artist: {yt.author}")
-        st.write(f"Length: {yt.length} seconds")
-        download_audio(yt)
-        download_video(yt)
+    with st.form(key="download_video"):
+        if video_url:
+            yt = YouTube(video_url)
+            st.video(yt.streams.first().url)
+            st.write(f"Title: {yt.title}")
+            st.write(f"Artist: {yt.author}")
+            st.write(f"Length: {yt.length} seconds")
+
+            if st.form_submit_button('Download Audio'):
+                download_audio(yt)
+            if st.form_submit_button('Download Video'):
+                download_video(yt)
+with tab3:
+    playlist_url = st.text_input('Enter the playlist url')
+    with st.form(key="download_playlist"):
+        if playlist_url:
+            playlist = Playlist(playlist_url)
+            st.write(f"__Playlist Title__: {playlist.title}")
+            st.write(f"__Number of videos__: {len(playlist.videos)}")
+            with st.expander('Videos'):
+                for yt in playlist.videos:
+                    st.write(f"__Video Title__: {yt.title}")
+                    st.write(f"__Video Length__: {yt.length} seconds")
+                    st.write(f"__Video Views__: {yt.views}")
+                    st.write(f"__Video Author__: {yt.author}")
+                    st.write(f"__Video URL__: {yt.watch_url}")
+                    st.markdown('---')
+
+            if st.form_submit_button('Download Videos'):
+                for yt in playlist.videos:
+                    download_video(yt)
+            if st.form_submit_button('Download Audios'):
+                for yt in playlist.videos:
+                    download_audio(yt)
